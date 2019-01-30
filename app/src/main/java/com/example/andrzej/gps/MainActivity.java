@@ -18,13 +18,23 @@ import android.webkit.WebView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -86,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
         if (locationProvider != null) {
             Toast.makeText(this, "Location listener registered!", Toast.LENGTH_SHORT).show();
             try {
-                this.locationManager.requestLocationUpdates(locationProvider.getName(), 0, 0,
+                this.locationManager.requestLocationUpdates(locationProvider.getName(), 10000, 10,
                         this.locationListener);
             } catch (SecurityException e) {
                 e.printStackTrace();
@@ -119,6 +129,67 @@ public class MainActivity extends AppCompatActivity {
         public void onLocationChanged(Location location) {
             final double lat = (location.getLatitude());
             final double lon = location.getLongitude();
+            final double time = location.getTime();
+
+            DateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSSXXX");
+            Date date = new Date(location.getTime());
+            final String formatted = format.format(date);
+
+
+            final JSONObject jsonObject = new JSONObject();
+            try {
+                jsonObject.put("name", "Śmiały");
+                jsonObject.put("opis", "Mały podróżnik");
+                jsonObject.put("lat", lat);
+                jsonObject.put("lon", lon);
+                jsonObject.put("time", formatted);
+                jsonObject.put("icon", "fa-truck");
+                jsonObject.put("iconColor", "DarkGreen");
+                jsonObject.put("color", "DarkGreen");
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+
+                   // SendJSON sendJSON = new SendJSON();
+                   // sendJSON.send(jsonObject);
+
+                    SendJSON.send("http://lukan.sytes.net:1880/mapa",jsonObject);
+                    /*
+                    URL url = null;
+                    HttpURLConnection urlConnection = null;
+                    try {
+                        url = new URL("http://lukan.sytes.net:1880/mapa");
+                        urlConnection = (HttpURLConnection) url.openConnection();
+
+                        urlConnection.setDoOutput(true);
+                        urlConnection.setChunkedStreamingMode(0);
+                        urlConnection.setRequestMethod("POST");
+                        urlConnection.setRequestProperty("content-type","application/json");
+
+                        OutputStream out = new BufferedOutputStream(urlConnection.getOutputStream());
+
+                        out.write(jsonObject.toString().getBytes());
+                        out.close();
+
+                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                        //readStream(in);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (urlConnection != null) {
+                            urlConnection.disconnect();
+                        }
+                    }
+                    */
+                }
+            }).start();
+
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
